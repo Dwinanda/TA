@@ -3,7 +3,8 @@ import math
 
 #=======Data Training========
 kurs = pd.read_excel(r'D:\Kuliah\Semester8\TA\TA_KoTA305\TA\DataHistoris.xlsx', sheet_name='Kurs Jual Sebelum Covid')
-data = pd.DataFrame(kurs, columns = ['Kurs'])
+data = pd.DataFrame(kurs, columns = ['No', 'Kurs'])
+# pd.set_option("display.max_rows", None)
 
 print(data)
 row_count = pd.DataFrame(kurs, columns = ['No']).count()
@@ -38,9 +39,9 @@ for i in range(banyak_kelas):
 for j in range(banyak_kelas):
     j = i + interval_kelas
 # while (j < maksimal[0]):
-    print(f"Range ke - {k}:", i, ' - ', j)
+    print(f"Interval Kelas ke - {k}: ", i, ' - ', j, " = " f"A{k}", )
     j = j + 1
     i = j
     k = k + 1
-    
+
 # print(data)

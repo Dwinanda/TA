@@ -1,13 +1,17 @@
 from array import array
+from ast import And
 from codecs import ignore_errors
 from csv import writer
+from ctypes import sizeof
+from re import T
 import string
 import pandas as pd
 import math
 
 #=======Data Training========
-kurs = pd.read_excel(r'D:\Kuliah\Semester8\TA\TA_KoTA305\TA\DataHistoris.xlsx', sheet_name='Kurs Jual Sebelum Covid')
+kurs = pd.read_excel(r'D:\Kuliah\Semester8\TA\TA_KoTA305\TA\DataHistoris.xlsx', sheet_name='Kurs Beli Ketika Covid')
 data = pd.DataFrame(kurs, columns = ['No', 'Kurs'])
+datav2= pd.DataFrame(kurs, columns = ['No', 'Tanggal', 'Kurs', 'Fuzzyfikasi'])
 # print(kurs_array)
 # pd.set_option("display.max_rows", None)
 
@@ -20,27 +24,27 @@ row_count = pd.DataFrame(kurs, columns = ['No']).count()
 minimal=pd.DataFrame(kurs, columns = ['Kurs']).min().astype(int)
 maksimal=pd.DataFrame(kurs, columns = ['Kurs']).max().astype(int)
 
-# print('Nilai Minimal dari data historis yaitu: ', minimal[0])
-# print('Nilai Maksimal dari data historis yaitu: ', maksimal[0])
+print('Nilai Minimal dari data historis yaitu: ', minimal[0])
+print('Nilai Maksimal dari data historis yaitu: ', maksimal[0])
 
 #Tahapan menentukan Banyak Kelas, Rentang Kelas, dan Interval Kelas
 banyak_kelas = 1+(3.3*math.log10(row_count))
 banyak_kelas = int(banyak_kelas)
-# print('Banyak Kelas adalah:', banyak_kelas)
+print('Banyak Kelas adalah:', banyak_kelas)
 
 rentang_kelas = maksimal[0] - minimal[0] 
 
-# print('Rentang Kelas dari data historis yaitu:', rentang_kelas)
+print('Rentang Kelas dari data historis yaitu:', rentang_kelas)
 
-interval_kelas = rentang_kelas/12
+interval_kelas = rentang_kelas/banyak_kelas
 interval_kelas = int(interval_kelas)
-# print('Interval Kelas dari data historis yaitu:', interval_kelas)
+print('Interval Kelas dari data historis yaitu:', interval_kelas)
 
 
 #Pembentukan Interval Kelas data historis
 kumpulan_kelas = []
 kumpulan_fuzzyfikasi = []
-nilai_tengah = []
+kumpulan_nilai_tengah = []
 for i in range(banyak_kelas):
     k = 1
     i = minimal[0]
@@ -54,7 +58,10 @@ for j in range(banyak_kelas):
     kumpulan_kelas.append(kelas)
     print(kelas)
     nilai = (i + j)/2
-    nilai_tengah.append(nilai)
+    kelas_dan_nilai_tengah = []
+    kelas_dan_nilai_tengah.append(f"A{k}")
+    kelas_dan_nilai_tengah.append(nilai)
+    kumpulan_nilai_tengah.append(kelas_dan_nilai_tengah)
     print(f"Interval Kelas ke - {k}: ", i, ' - ', j, " = " f"A{k}", " = ", nilai)
     j = j + 1
     i = j
@@ -71,6 +78,7 @@ print(data1)
 
 # Loop Penentuan Fuzzyfikasi
 fuzzyfikasi = []
+fuzzyfikasi_data_historis = []
 for kurs_b4_covid in kurs.values:
     kurs_checked = kurs_b4_covid[2]
     for kelas in kumpulan_kelas:
@@ -81,11 +89,15 @@ for kurs_b4_covid in kurs.values:
             data_historis.append(kurs_b4_covid[2])
             data_historis.append(kelas[2])
             fuzzyfikasi.append(data_historis)
-            # print(str(kurs_checked) + " masuk ke kelas " + kelas[2])            
+            # print(str(kurs_checked) + " masuk ke kelas " + kelas[2])
+            fuzzyfikasi_kurs_data_historis = []
+            fuzzyfikasi_kurs_data_historis.append(kurs_checked)
+            fuzzyfikasi_kurs_data_historis.append(kelas[2])
+            fuzzyfikasi_data_historis.append(fuzzyfikasi_kurs_data_historis)     
             break
 # Fuzzyfikasi = pd.DataFrame(fuzzyfikasi, columns=['No', 'Tanggal', 'Kurs', 'Fuzzyfikasi'])
 # with pd.ExcelWriter('D:\Kuliah\Semester8\TA\TA_KoTA305\TA\DataHistoris.xlsx', mode='a') as writer:
-#     FLR.to_excel(writer, sheet_name='Fuzzyfikasi Kurs Jual', index=False)
+#     Fuzzyfikasi.to_excel(writer, sheet_name='Fuzzyfikasi Kurs Beli Ketika', index=False)
 kurs_array.append(data1)
 kumpulan_kurs.append(kurs_array)
 
@@ -101,7 +113,7 @@ for i in range(0, FLRData.size - 1):
             FLRData_values_kumpulan.append(FLRData.values[i][0])
             FLRData_values_kumpulan.append(FLRData.values[i+1][0])
             FLRData_kumpulan.append(FLRData_values_kumpulan)
-# print(kumpulan_fuzzyfikasi[0])
+print(kumpulan_fuzzyfikasi)
 
 # Penentuan FLRG
 perpus = []
@@ -119,8 +131,132 @@ for fuzzyfikasi in kumpulan_fuzzyfikasi:
 print(perpus)
 
 # Menghitung Nilai FLRG
-for nilai_fuzzyfikasi in kumpulan_fuzzyfikasi:
-    nilai_FLRG = []
+array_nilai_FLRG = []
+for buku in perpus:
+    nilai_FLRG = 0
+    banyak_FLRG = 0
+    for flrg in buku[1]:
+        for nilai_tengah in kumpulan_nilai_tengah:
+            if(nilai_tengah[0] == flrg):
+                nilai_FLRG += nilai_tengah[1]
+        banyak_FLRG += 1
+    # print(nilai_FLRG)
+    if banyak_FLRG == 0:
+        nilai_FLRG = 0
+    else:
+        nilai_FLRG /= banyak_FLRG
+    kelas_dan_nilai_FLRG = []
+    kelas_dan_nilai_FLRG.append(buku[0])
+    kelas_dan_nilai_FLRG.append(nilai_FLRG)
+    array_nilai_FLRG.append(kelas_dan_nilai_FLRG)
+    print("Nilai FLRG dari ", buku[0], " = ", str(nilai_FLRG))
+    
+#Menentukan Nilai FLRG untuk Data Historis
+array_kurs_nilai_FLRG = []
+array_hasil_peramalan = []
+for k in fuzzyfikasi_data_historis:
+    for l in array_nilai_FLRG:
+        # # masukin ke peramalan
+        # if(len(array_kurs_nilai_FLRG) > 0):
+        #     kurs_nilai_FLRG_peramalan = []
+        #     nilai_peramalan = array_kurs_nilai_FLRG[len(array_kurs_nilai_FLRG)-1][2]
+        #     kurs_nilai_FLRG_peramalan.append(k[0])
+        #     kurs_nilai_FLRG_peramalan.append(k[1])
+        #     kurs_nilai_FLRG_peramalan.append(l[1])
+        #     kurs_nilai_FLRG_peramalan.append(nilai_peramalan)   
+        #     array_hasil_peramalan.append(kurs_nilai_FLRG_peramalan)
+        #     print("Kurs = ", k[0], " Fuzzyfikasi = ", k[1], " Nilai FLRG = ", l[1], " Hasil Peramalan = ", nilai_peramalan)
+
+        
+        # hitung flrg
+        if k[1] == l[0]:
+            kurs_nilai_FLRG = []
+            kurs_nilai_FLRG.append(k[0])
+            kurs_nilai_FLRG.append(k[1])
+            kurs_nilai_FLRG.append(l[1])
+            
+            # masukin ke peramalan
+            if(len(array_kurs_nilai_FLRG) > 0):
+                kurs_nilai_FLRG_peramalan = []
+                nilai_peramalan = array_kurs_nilai_FLRG[len(array_kurs_nilai_FLRG)-1][2]
+                kurs_nilai_FLRG_peramalan.append(k[0])
+                kurs_nilai_FLRG_peramalan.append(k[1])
+                kurs_nilai_FLRG_peramalan.append(l[1])
+                kurs_nilai_FLRG_peramalan.append(nilai_peramalan)   
+                array_hasil_peramalan.append(kurs_nilai_FLRG_peramalan)
+                # print("Kurs = ", k[0], " Fuzzyfikasi = ", k[1], " Nilai FLRG = ", l[1], " Hasil Peramalan = ", nilai_peramalan)
+            array_kurs_nilai_FLRG.append(kurs_nilai_FLRG)
+    
+#Menentukan MAPE
+array_hasil_mape = []
+for m in array_hasil_peramalan:
+    hasil_mape = []
+    nilai_mape = (abs(m[3] - m[0])/m[0]) * 100
+    hasil_mape.append(m[0])
+    hasil_mape.append(m[1])
+    hasil_mape.append(m[2])
+    hasil_mape.append(m[3])
+    hasil_mape.append(nilai_mape)
+    array_hasil_mape.append(hasil_mape)
+    # print("Kurs = ", m[0], " Fuzzyfikasi = ", m[1], " Nilai FLRG = ", m[2], " Hasil Peramalan = ", m[3], " Nilai MAPE = ", 
+        # nilai_mape)
+
+# Write to new excel
+# hasil_eksperimen = pd.DataFrame(array_hasil_peramalan, columns=['Kurs', 'Tanggal', 'Kurs', 'Fuzzyfikasi'])
+# with pd.ExcelWriter('D:\Kuliah\Semester8\TA\TA_KoTA305\TA\DataHistoris.xlsx', mode='a') as writer:
+#     FLR.to_excel(writer, sheet_name='Fuzzyfikasi Kurs Jual', index=False)
+print(data.values[0][0].astype(int))
+array_hasil_eksperimen = []
+j = 0
+for i in datav2.values:
+    nomor = i[0]
+    tanggal = str(i[1])
+    kurs = 0
+    fuzzyfikasi = ""
+    nilai_FLRG = 0.0
+    nilai_peramalan = 0.0
+    nilai_mape = 0.0
+    
+    row_hasil_eksperimen = []
+    
+    # khusus row pertama
+    if(j < 1):
+        kurs = int(i[2])
+        fuzzyfikasi = array_hasil_mape[j][1]
+        nilai_FLRG = array_hasil_mape[j][2]
+        row_hasil_eksperimen.append(nomor)
+        row_hasil_eksperimen.append(tanggal)
+        row_hasil_eksperimen.append(kurs)
+        row_hasil_eksperimen.append(fuzzyfikasi)
+        row_hasil_eksperimen.append(nilai_FLRG)
+        
+        array_hasil_eksperimen.append(row_hasil_eksperimen)
+        
+    elif j<=len(array_hasil_mape):
+        kurs = array_hasil_mape[j-1][0]
+        fuzzyfikasi = array_hasil_mape[j-1][1]
+        nilai_FLRG = array_hasil_mape[j-1][2]
+        nilai_peramalan = array_hasil_mape[j-1][3]
+        nilai_mape = array_hasil_mape[j-1][4]
+        row_hasil_eksperimen.append(nomor)
+        row_hasil_eksperimen.append(tanggal)
+        row_hasil_eksperimen.append(kurs)
+        row_hasil_eksperimen.append(fuzzyfikasi)
+        row_hasil_eksperimen.append(nilai_FLRG)
+        row_hasil_eksperimen.append(nilai_peramalan)
+        row_hasil_eksperimen.append(nilai_mape)
+        
+        array_hasil_eksperimen.append(row_hasil_eksperimen)
+    
+    j += 1
+        
+# print(array_hasil_eksperimen)
+
+# excel_array_hasil_eksperimen = pd.DataFrame(array_hasil_eksperimen, columns=["No", "Tanggal", "Kurs", "Fuzzyfikasi", "Nilai FLRG", "Hasil Peramalan", "Nilai MAPE"])
+# # excel_array_hasil_eksperimen.to_excel(sheet_name= 'Lembar1')
+# with pd.ExcelWriter('D:\Kuliah\Semester8\TA\TA_KoTA305\TA\DataHistoris.xlsx', mode='a') as writer:
+#     excel_array_hasil_eksperimen.to_excel(writer, sheet_name='Hasil Kurs Beli Ketika Covid', index=False)
+
 
 # for fuzzyfikasi_b4_covid in FLRData.values:
 #     print(fuzzyfikasi_b4_covid)
